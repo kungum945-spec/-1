@@ -1,0 +1,2218 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+# GEMINI_API_KEY: Required for Gemini AI API calls.
+# AI Studio automatically injects this at runtime from user secrets.
+# Users configure this via the Secrets panel in the AI Studio UI.
+GEMINI_API_KEY="MY_GEMINI_API_KEY"
+
+# APP_URL: The URL where this applet is hosted.
+# AI Studio automatically injects this at runtime with the Cloud Run service URL.
+# Used for self-referential links, OAuth callbacks, and API endpoints.
+APP_URL="MY_APP_URL"
+{
+  "name": "react-example",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx server.ts",
+    "build": "vite build",
+    "start": "node server.ts",
+    "preview": "vite preview",
+    "clean": "rm -rf dist server.js",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@google/genai": "^2.4.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "@vitejs/plugin-react": "^6.1.1",
+    "lucide-react": "^0.546.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "vite": "^8.3.0",
+    "express": "^4.21.2",
+    "dotenv": "^17.2.3",
+    "motion": "^12.23.24"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.21.0",
+    "typescript": "^7.0.2",
+    "@types/express": "^4.17.21"
+  }
+}
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "experimentalDecorators": true,
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "types": ["vite/client"],
+    "lib": [
+      "ES2022",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "allowJs": true,
+    "jsx": "react-jsx",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    },
+    "allowImportingTsExtensions": true,
+    "noEmit": true
+  },
+  "exclude": ["dist"]
+}
+import tailwindcss from '@tailwindcss/vite';
+import react from '@vitejs/plugin-react';
+import fs from 'fs';
+import path from 'path';
+import {defineConfig} from 'vite';
+
+export default defineConfig(() => {
+  return {
+    plugins: [
+      react(),
+      tailwindcss(),
+      // Copies src/assets into dist/ so root-relative URLs like
+      // "/src/assets/images/..." (e.g. generate_image output) still resolve
+      // in production builds. Do not remove.
+      {
+        name: 'copy-unbundled-src-assets',
+        apply: 'build',
+        closeBundle(error?: Error): void {
+          if (error) {
+            return;
+          }
+          const distDir = path.resolve(__dirname, 'dist');
+          const srcAssets = path.resolve(__dirname, 'src/assets');
+          const distAssets = path.resolve(distDir, 'src/assets');
+          if (fs.existsSync(distDir) && fs.existsSync(srcAssets)) {
+            fs.cpSync(srcAssets, distAssets, {recursive: true, force: true});
+          }
+        },
+      },
+    ],
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      },
+    },
+    server: {
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      // Do not modify—file watching is disabled to prevent flickering during agent edits.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+  };
+});
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ดัชนีสูตรหวยหุ้นต่างประเทศ — คำนวณและทดสอบสถิติ</title>
+    <meta name="description" content="เครื่องมือคำนวณ วิเคราะห์สถิติย้อนหลัง และสร้างสูตรหวยหุ้นต่างประเทศครบทุกตลาด" />
+    <meta property="og:title" content="ดัชนีสูตรหวยหุ้นต่างประเทศ — คำนวณและทดสอบสถิติ" />
+    <meta property="og:description" content="เครื่องมือคำนวณ วิเคราะห์สถิติย้อนหลัง และสร้างสูตรหวยหุ้นต่างประเทศครบทุกตลาด" />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body class="bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+{
+  "name": "ดัชนีสูตรหวยหุ้นต่างประเทศ",
+  "description": "เครื่องมือคำนวณ วิเคราะห์สถิติย้อนหลัง และสร้างสูตรหวยหุ้นต่างประเทศครบทุกตลาด",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const PORT = Number(process.env.PORT) || 3000;
+const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+const CACHE_TTL_MS = 45 * 1000;
+
+interface MarketFeedConfig {
+  marketId: string;
+  symbol: string;
+  closeHour: number;
+  closeMinute: number;
+  isIntradayCutoff?: boolean;
+}
+
+const MARKET_FEEDS: MarketFeedConfig[] = [
+  { marketId: 'nikkei-am', symbol: '^N225', closeHour: 9, closeMinute: 30, isIntradayCutoff: true },
+  { marketId: 'nikkei-pm', symbol: '^N225', closeHour: 13, closeMinute: 0 },
+  { marketId: 'china-am', symbol: '000001.SS', closeHour: 10, closeMinute: 30, isIntradayCutoff: true },
+  { marketId: 'china-pm', symbol: '000001.SS', closeHour: 14, closeMinute: 0 },
+  { marketId: 'hangseng-am', symbol: '^HSI', closeHour: 11, closeMinute: 0, isIntradayCutoff: true },
+  { marketId: 'hangseng-pm', symbol: '^HSI', closeHour: 15, closeMinute: 0 },
+  { marketId: 'taiwan', symbol: '^TWII', closeHour: 12, closeMinute: 30 },
+  { marketId: 'korea', symbol: '^KS11', closeHour: 13, closeMinute: 0 },
+  { marketId: 'singapore', symbol: '^STI', closeHour: 16, closeMinute: 0 },
+  { marketId: 'india', symbol: '^BSESN', closeHour: 17, closeMinute: 30 },
+  { marketId: 'germany', symbol: '^GDAXI', closeHour: 23, closeMinute: 0 },
+  { marketId: 'uk', symbol: '^FTSE', closeHour: 23, closeMinute: 30 },
+  { marketId: 'dowjones', symbol: '^DJI', closeHour: 4, closeMinute: 0 },
+  { marketId: 'egypt', symbol: '^CASE30', closeHour: 20, closeMinute: 0 },
+];
+
+interface QuoteItemPayload {
+  date: string;
+  timeBkk: string;
+  indexClose: string;
+  indexChange: string;
+  top3: string;
+  top2: string;
+  bottom2: string;
+}
+
+interface MarketSyncPayload {
+  marketId: string;
+  symbol: string;
+  live?: QuoteItemPayload;
+  closed?: QuoteItemPayload;
+}
+
+interface ParsedBar {
+  timestampSec: number;
+  dateStr: string;
+  timeStr: string;
+  minutesOfDay: number;
+  close: number;
+}
+
+interface SymbolChartData {
+  prevClose: number;
+  regularMarketPrice: number | null;
+  regularMarketTimeSec: number | null;
+  bars: ParsedBar[];
+}
+
+let quotesCache: { fetchedAt: number; payload: { updatedAt: string; quotes: Record<string, MarketSyncPayload> } } | null = null;
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function toBangkokInfo(ms: number): { dateStr: string; timeStr: string; minutesOfDay: number } {
+  const bkk = new Date(ms + BANGKOK_OFFSET_MS);
+  const y = bkk.getUTCFullYear();
+  const m = pad2(bkk.getUTCMonth() + 1);
+  const d = pad2(bkk.getUTCDate());
+  const hh = bkk.getUTCHours();
+  const mm = bkk.getUTCMinutes();
+  return {
+    dateStr: `${y}-${m}-${d}`,
+    timeStr: `${pad2(hh)}:${pad2(mm)}`,
+    minutesOfDay: hh * 60 + mm,
+  };
+}
+
+function buildQuoteDigits(
+  price: number,
+  prevClose: number,
+  dateStr: string,
+  timeStr: string
+): QuoteItemPayload {
+  const roundedPrice = Math.round(price * 100) / 100;
+  const priceFixed = roundedPrice.toFixed(2);
+  const [priceIntRaw, priceDec] = priceFixed.split('.');
+  const priceIntNum = Number(priceIntRaw);
+  const indexClose = `${priceIntNum.toLocaleString('en-US')}.${priceDec}`;
+
+  const diff = Math.round((roundedPrice - prevClose) * 100) / 100;
+  const sign = diff < 0 ? '-' : '+';
+  const absFixed = Math.abs(diff).toFixed(2);
+  const [diffIntRaw, diffDec] = absFixed.split('.');
+  const diffIntNum = Number(diffIntRaw);
+  const indexChange = `${sign}${diffIntNum.toLocaleString('en-US')}.${diffDec}`;
+
+  const top2 = priceDec;
+  const top3 = `${priceIntRaw.slice(-1)}${top2}`;
+  const bottom2 = diffDec;
+
+  return {
+    date: dateStr,
+    timeBkk: timeStr,
+    indexClose,
+    indexChange,
+    top3,
+    top2,
+    bottom2,
+  };
+}
+
+async function fetchYahooSymbol(symbol: string): Promise<SymbolChartData | null> {
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+    symbol
+  )}?range=1d&interval=5m`;
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 7000);
+    const res = await fetch(url, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; StockIndexCalculator/1.0)',
+      },
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+
+    const json = (await res.json()) as {
+      chart?: {
+        result?: Array<{
+          meta?: {
+            chartPreviousClose?: number;
+            previousClose?: number;
+            regularMarketPrice?: number;
+            regularMarketTime?: number;
+          };
+          timestamp?: number[];
+          indicators?: {
+            quote?: Array<{
+              close?: Array<number | null>;
+            }>;
+          };
+        }>;
+      };
+    };
+
+    const result = json.chart?.result?.[0];
+    if (!result?.meta) return null;
+
+    const prevClose =
+      typeof result.meta.chartPreviousClose === 'number'
+        ? result.meta.chartPreviousClose
+        : typeof result.meta.previousClose === 'number'
+        ? result.meta.previousClose
+        : null;
+
+    if (prevClose === null) return null;
+
+    const timestamps = result.timestamp ?? [];
+    const closes = result.indicators?.quote?.[0]?.close ?? [];
+    const bars: ParsedBar[] = [];
+
+    for (let i = 0; i < timestamps.length; i++) {
+      const c = closes[i];
+      const t = timestamps[i];
+      if (typeof c === 'number' && Number.isFinite(c) && typeof t === 'number') {
+        const info = toBangkokInfo(t * 1000);
+        bars.push({
+          timestampSec: t,
+          dateStr: info.dateStr,
+          timeStr: info.timeStr,
+          minutesOfDay: info.minutesOfDay,
+          close: c,
+        });
+      }
+    }
+
+    return {
+      prevClose,
+      regularMarketPrice:
+        typeof result.meta.regularMarketPrice === 'number'
+          ? result.meta.regularMarketPrice
+          : null,
+      regularMarketTimeSec:
+        typeof result.meta.regularMarketTime === 'number'
+          ? result.meta.regularMarketTime
+          : null,
+      bars,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function computeAllMarketQuotes(force: boolean): Promise<{
+  updatedAt: string;
+  quotes: Record<string, MarketSyncPayload>;
+}> {
+  const nowMs = Date.now();
+  if (!force && quotesCache && nowMs - quotesCache.fetchedAt < CACHE_TTL_MS) {
+    return quotesCache.payload;
+  }
+
+  const uniqueSymbols = Array.from(new Set(MARKET_FEEDS.map((m) => m.symbol)));
+  const fetchedEntries = await Promise.all(
+    uniqueSymbols.map(async (sym) => [sym, await fetchYahooSymbol(sym)] as const)
+  );
+  const symbolDataMap = new Map<string, SymbolChartData>();
+  for (const [sym, data] of fetchedEntries) {
+    if (data) symbolDataMap.set(sym, data);
+  }
+
+  const nowBkk = toBangkokInfo(nowMs);
+  const quotes: Record<string, MarketSyncPayload> = {};
+
+  for (const feed of MARKET_FEEDS) {
+    const data = symbolDataMap.get(feed.symbol);
+    if (!data) continue;
+
+    const closeMinutes = feed.closeHour * 60 + feed.closeMinute;
+    const latestBar = data.bars[data.bars.length - 1];
+
+    const livePrice = data.regularMarketPrice ?? latestBar?.close ?? null;
+    const liveTimeInfo = data.regularMarketTimeSec
+      ? toBangkokInfo(data.regularMarketTimeSec * 1000)
+      : latestBar
+      ? { dateStr: latestBar.dateStr, timeStr: latestBar.timeStr, minutesOfDay: latestBar.minutesOfDay }
+      : nowBkk;
+
+    const live =
+      livePrice !== null
+        ? buildQuoteDigits(livePrice, data.prevClose, liveTimeInfo.dateStr, liveTimeInfo.timeStr)
+        : undefined;
+
+    let closed: QuoteItemPayload | undefined;
+    const sessionDate = latestBar?.dateStr ?? liveTimeInfo.dateStr;
+    const dayBars = data.bars.filter((b) => b.dateStr === sessionDate);
+    const hasPassedCloseOnSessionDate =
+      nowBkk.dateStr > sessionDate ||
+      (nowBkk.dateStr === sessionDate && nowBkk.minutesOfDay >= closeMinutes);
+
+    if (hasPassedCloseOnSessionDate && (dayBars.length > 0 || livePrice !== null)) {
+      if (feed.isIntradayCutoff) {
+        const cutoffBars = dayBars.filter((b) => b.minutesOfDay <= closeMinutes + 5);
+        const chosen = cutoffBars[cutoffBars.length - 1];
+        if (chosen) {
+          closed = buildQuoteDigits(
+            chosen.close,
+            data.prevClose,
+            chosen.dateStr,
+            chosen.timeStr
+          );
+        }
+      } else {
+        const finalPrice =
+          data.regularMarketPrice !== null &&
+          liveTimeInfo.dateStr === sessionDate &&
+          liveTimeInfo.minutesOfDay >= closeMinutes - 15
+            ? data.regularMarketPrice
+            : dayBars[dayBars.length - 1]?.close ?? livePrice;
+
+        if (finalPrice !== null) {
+          const finalTime = `${pad2(feed.closeHour)}:${pad2(feed.closeMinute)}`;
+          closed = buildQuoteDigits(finalPrice, data.prevClose, sessionDate, finalTime);
+        }
+      }
+    }
+
+    quotes[feed.marketId] = {
+      marketId: feed.marketId,
+      symbol: feed.symbol,
+      live,
+      closed,
+    };
+  }
+
+  const payload = {
+    updatedAt: new Date(nowMs).toISOString(),
+    quotes,
+  };
+  quotesCache = { fetchedAt: nowMs, payload };
+  return payload;
+}
+
+async function startServer() {
+  const app = express();
+
+  app.get('/api/market-quotes', async (req, res) => {
+    const force = req.query.force === '1';
+    try {
+      const payload = await computeAllMarketQuotes(force);
+      res.json(payload);
+    } catch {
+      res.status(502).json({
+        updatedAt: new Date().toISOString(),
+        quotes: {},
+      });
+    }
+  });
+
+  if (process.env.NODE_ENV !== 'production') {
+    const { createServer: createViteServer } = await import('vite');
+    const vite = await createViteServer({
+      server: { middlewareMode: true },
+      appType: 'spa',
+    });
+    app.use(vite.middlewares);
+  } else {
+    const distDir = path.resolve(__dirname, 'dist');
+    if (fs.existsSync(distDir)) {
+      app.use(express.static(distDir));
+      app.get('*', (_req, res) => {
+        res.sendFile(path.join(distDir, 'index.html'));
+      });
+    }
+  }
+
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+  });
+}
+
+startServer();
+import {createRoot} from 'react-dom/client';
+import App from './App.tsx';
+import './index.css';
+
+createRoot(document.getElementById('root')!).render(<App />);
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Thai", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+export type MarketRegion = 'thai' | 'asia' | 'europe' | 'americas_me';
+
+export interface DrawRecord {
+  id: string;
+  date: string; // YYYY-MM-DD
+  indexClose: string; // e.g. "38,425.74"
+  indexChange: string; // e.g. "+142.38"
+  top3: string; // 3 digits e.g. "574"
+  top2: string; // 2 digits e.g. "74"
+  bottom2: string; // 2 digits e.g. "38"
+}
+
+export interface StockMarket {
+  id: string;
+  nameTh: string;
+  nameEn: string;
+  indexCode: string;
+  sessionTh: string;
+  closeTimeTh: string;
+  region: MarketRegion;
+  regionLabelTh: string;
+  defaultHistory: DrawRecord[];
+}
+
+export type DigitPosition =
+  | 'hundredsTop'
+  | 'tensTop'
+  | 'unitsTop'
+  | 'tensBottom'
+  | 'unitsBottom';
+
+export interface FormulaTerm {
+  position: DigitPosition;
+  multiplier: number;
+}
+
+export interface CustomFormulaSpec {
+  terms: FormulaTerm[];
+  constantOffset: number;
+  secondaryOffsets: number[]; // e.g. [1, 3] adds +1 and +3 mod 10 to base digit
+}
+
+export interface CalculationStep {
+  label: string;
+  expression: string;
+  result: string;
+}
+
+export interface FormulaResult {
+  keyDigits: number[];
+  primaryDigit: number;
+  steps: CalculationStep[];
+}
+
+export interface LivePreCloseQuote {
+  indexClose: string;
+  indexChange: string;
+  top3: string;
+  bottom2: string;
+  timeLabelTh: string;
+}
+
+export interface FormulaEvaluationContext {
+  indexChange?: string;
+  history?: DrawRecord[];
+  livePreClose?: LivePreCloseQuote;
+}
+
+export interface FormulaDefinition {
+  id: string;
+  name: string;
+  summary: string;
+  ruleText: string;
+  isCustom: boolean;
+  usesLiveTrend?: boolean;
+  customSpec?: CustomFormulaSpec;
+  evaluate: (
+    draw: { top3: string; bottom2: string },
+    context?: FormulaEvaluationContext
+  ) => FormulaResult;
+}
+
+export interface MarketQuoteItem {
+  date: string;
+  timeBkk: string;
+  indexClose: string;
+  indexChange: string;
+  top3: string;
+  top2: string;
+  bottom2: string;
+}
+
+export interface MarketQuoteSyncData {
+  marketId: string;
+  symbol: string;
+  live?: MarketQuoteItem;
+  closed?: MarketQuoteItem;
+}
+
+export interface FocusedThreeDigitPlan {
+  hundredsCandidates: number[];
+  tensCandidates: number[];
+  unitsCandidates: number[];
+  focused8: string[];
+  positional27: string[];
+}
+
+export interface BacktestDrawOutcome {
+  drawId: string;
+  date: string;
+  sourceTop3: string;
+  sourceBottom2: string;
+  actualTop3: string;
+  actualBottom2: string;
+  predictedDigits: number[];
+  hitTop: boolean;
+  hitBottom: boolean;
+  isHit: boolean;
+  hitStraight27: boolean;
+  hitFocused8: boolean;
+  matchedPositions: number; // 0..3 positions matched in top-3 positional candidates
+}
+
+export interface BacktestSummary {
+  formulaId: string;
+  totalTested: number;
+  hitCount: number;
+  hitTopCount: number;
+  hitBottomCount: number;
+  winRate: number;
+  currentStreak: number;
+  straight27Hits: number;
+  focused8Hits: number;
+  positionalAccuracy: number; // percentage of (matchedPositions / (totalTested * 3))
+  recentOutcomes: BacktestDrawOutcome[];
+}
+import type { DrawRecord, StockMarket } from '../types/lottery';
+import { extractDigitsFromIndex } from '../utils/formulas';
+
+function makeDraw(
+  marketId: string,
+  index: number,
+  date: string,
+  indexClose: string,
+  indexChange: string
+): DrawRecord {
+  const extracted = extractDigitsFromIndex(indexClose, indexChange);
+  return {
+    id: `${marketId}-seed-${index}`,
+    date,
+    indexClose: extracted.normalizedIndex,
+    indexChange: extracted.normalizedChange,
+    top3: extracted.top3,
+    top2: extracted.top2,
+    bottom2: extracted.bottom2,
+  };
+}
+
+function makeThaiDraw(
+  index: number,
+  date: string,
+  top3: string,
+  bottom2: string
+): DrawRecord {
+  return {
+    id: `thai-gov-seed-${index}`,
+    date,
+    indexClose: 'สลากกินแบ่งรัฐบาล',
+    indexChange: '-',
+    top3,
+    top2: top3.slice(1),
+    bottom2,
+  };
+}
+
+export const STOCK_MARKETS: StockMarket[] = [
+  {
+    id: 'thai-gov',
+    nameTh: 'หวยรัฐบาลไทย',
+    nameEn: 'Thai Government Lottery',
+    indexCode: 'GLO',
+    sessionTh: 'วันที่ 1 และ 16',
+    closeTimeTh: '15:30 น.',
+    region: 'thai',
+    regionLabelTh: 'หวยรัฐบาล',
+    defaultHistory: [
+      makeThaiDraw(1, '2026-11-16', '742', '58'),
+      makeThaiDraw(2, '2026-11-01', '319', '64'),
+      makeThaiDraw(3, '2026-10-16', '805', '27'),
+      makeThaiDraw(4, '2026-10-01', '461', '93'),
+      makeThaiDraw(5, '2026-09-16', '928', '15'),
+      makeThaiDraw(6, '2026-09-01', '574', '82'),
+      makeThaiDraw(7, '2026-08-16', '136', '49'),
+      makeThaiDraw(8, '2026-08-01', '683', '70'),
+      makeThaiDraw(9, '2026-07-16', '250', '36'),
+      makeThaiDraw(10, '2026-07-01', '897', '12'),
+      makeThaiDraw(11, '2026-06-16', '412', '68'),
+    ],
+  },
+  {
+    id: 'nikkei-am',
+    nameTh: 'หุ้นนิเคอิ (เช้า)',
+    nameEn: 'Nikkei 225 Morning',
+    indexCode: 'N225',
+    sessionTh: 'รอบเช้า',
+    closeTimeTh: '09:30 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('nikkei-am', 1, '2026-11-25', '38425.74', '+142.38'),
+      makeDraw('nikkei-am', 2, '2026-11-24', '38283.36', '-87.19'),
+      makeDraw('nikkei-am', 3, '2026-11-21', '38370.55', '+214.62'),
+      makeDraw('nikkei-am', 4, '2026-11-20', '38155.93', '-54.28'),
+      makeDraw('nikkei-am', 5, '2026-11-19', '38210.21', '+108.45'),
+      makeDraw('nikkei-am', 6, '2026-11-18', '38101.76', '+63.91'),
+      makeDraw('nikkei-am', 7, '2026-11-17', '38037.85', '-129.04'),
+      makeDraw('nikkei-am', 8, '2026-11-14', '38166.89', '+195.33'),
+      makeDraw('nikkei-am', 9, '2026-11-13', '37971.56', '-41.72'),
+      makeDraw('nikkei-am', 10, '2026-11-12', '38013.28', '+88.14'),
+      makeDraw('nikkei-am', 11, '2026-11-11', '37925.14', '+152.67'),
+    ],
+  },
+  {
+    id: 'nikkei-pm',
+    nameTh: 'หุ้นนิเคอิ (บ่าย)',
+    nameEn: 'Nikkei 225 Afternoon',
+    indexCode: 'N225',
+    sessionTh: 'รอบบ่าย',
+    closeTimeTh: '13:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('nikkei-pm', 1, '2026-11-25', '38512.19', '+228.83'),
+      makeDraw('nikkei-pm', 2, '2026-11-24', '38310.42', '-60.13'),
+      makeDraw('nikkei-pm', 3, '2026-11-21', '38448.67', '+292.74'),
+      makeDraw('nikkei-pm', 4, '2026-11-20', '38192.08', '-18.13'),
+      makeDraw('nikkei-pm', 5, '2026-11-19', '38264.51', '+162.75'),
+      makeDraw('nikkei-pm', 6, '2026-11-18', '38140.29', '+102.44'),
+      makeDraw('nikkei-pm', 7, '2026-11-17', '37988.63', '-178.26'),
+      makeDraw('nikkei-pm', 8, '2026-11-14', '38219.47', '+247.91'),
+      makeDraw('nikkei-pm', 9, '2026-11-13', '37995.12', '-18.16'),
+      makeDraw('nikkei-pm', 10, '2026-11-12', '38059.84', '+134.70'),
+      makeDraw('nikkei-pm', 11, '2026-11-11', '37961.35', '+188.88'),
+    ],
+  },
+  {
+    id: 'china-am',
+    nameTh: 'หุ้นจีน (เช้า)',
+    nameEn: 'SZSE / SSE Morning',
+    indexCode: 'SSE',
+    sessionTh: 'รอบเช้า',
+    closeTimeTh: '10:30 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('china-am', 1, '2026-11-25', '3348.62', '+18.45'),
+      makeDraw('china-am', 2, '2026-11-24', '3330.17', '-12.83'),
+      makeDraw('china-am', 3, '2026-11-21', '3343.00', '+27.19'),
+      makeDraw('china-am', 4, '2026-11-20', '3315.81', '-9.44'),
+      makeDraw('china-am', 5, '2026-11-19', '3325.25', '+15.62'),
+      makeDraw('china-am', 6, '2026-11-18', '3309.63', '+22.08'),
+      makeDraw('china-am', 7, '2026-11-17', '3287.55', '-16.37'),
+      makeDraw('china-am', 8, '2026-11-14', '3303.92', '+11.54'),
+      makeDraw('china-am', 9, '2026-11-13', '3292.38', '-21.90'),
+      makeDraw('china-am', 10, '2026-11-12', '3314.28', '+19.73'),
+      makeDraw('china-am', 11, '2026-11-11', '3294.55', '+8.26'),
+    ],
+  },
+  {
+    id: 'china-pm',
+    nameTh: 'หุ้นจีน (บ่าย)',
+    nameEn: 'SZSE / SSE Afternoon',
+    indexCode: 'SSE',
+    sessionTh: 'รอบบ่าย',
+    closeTimeTh: '14:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('china-pm', 1, '2026-11-25', '3361.48', '+31.31'),
+      makeDraw('china-pm', 2, '2026-11-24', '3336.94', '-6.06'),
+      makeDraw('china-pm', 3, '2026-11-21', '3352.17', '+36.36'),
+      makeDraw('china-pm', 4, '2026-11-20', '3321.40', '-3.85'),
+      makeDraw('china-pm', 5, '2026-11-19', '3338.79', '+29.16'),
+      makeDraw('china-pm', 6, '2026-11-18', '3318.24', '+30.69'),
+      makeDraw('china-pm', 7, '2026-11-17', '3279.63', '-24.29'),
+      makeDraw('china-pm', 8, '2026-11-14', '3312.85', '+20.47'),
+      makeDraw('china-pm', 9, '2026-11-13', '3284.19', '-30.09'),
+      makeDraw('china-pm', 10, '2026-11-12', '3320.67', '+26.12'),
+      makeDraw('china-pm', 11, '2026-11-11', '3301.42', '+15.13'),
+    ],
+  },
+  {
+    id: 'hangseng-am',
+    nameTh: 'หุ้นฮั่งเส็ง (เช้า)',
+    nameEn: 'Hang Seng Morning',
+    indexCode: 'HSI',
+    sessionTh: 'รอบเช้า',
+    closeTimeTh: '11:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('hangseng-am', 1, '2026-11-25', '19684.53', '+135.29'),
+      makeDraw('hangseng-am', 2, '2026-11-24', '19549.24', '-92.61'),
+      makeDraw('hangseng-am', 3, '2026-11-21', '19641.85', '+184.17'),
+      makeDraw('hangseng-am', 4, '2026-11-20', '19457.68', '-74.33'),
+      makeDraw('hangseng-am', 5, '2026-11-19', '19532.01', '+66.48'),
+      makeDraw('hangseng-am', 6, '2026-11-18', '19465.53', '+119.82'),
+      makeDraw('hangseng-am', 7, '2026-11-17', '19345.71', '-148.05'),
+      makeDraw('hangseng-am', 8, '2026-11-14', '19493.76', '+89.40'),
+      makeDraw('hangseng-am', 9, '2026-11-13', '19404.36', '-53.19'),
+      makeDraw('hangseng-am', 10, '2026-11-12', '19457.55', '+104.27'),
+      makeDraw('hangseng-am', 11, '2026-11-11', '19353.28', '+71.64'),
+    ],
+  },
+  {
+    id: 'hangseng-pm',
+    nameTh: 'หุ้นฮั่งเส็ง (บ่าย)',
+    nameEn: 'Hang Seng Afternoon',
+    indexCode: 'HSI',
+    sessionTh: 'รอบบ่าย',
+    closeTimeTh: '15:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('hangseng-pm', 1, '2026-11-25', '19738.16', '+188.92'),
+      makeDraw('hangseng-pm', 2, '2026-11-24', '19582.47', '-59.38'),
+      makeDraw('hangseng-pm', 3, '2026-11-21', '19694.31', '+236.63'),
+      makeDraw('hangseng-pm', 4, '2026-11-20', '19491.15', '-40.86'),
+      makeDraw('hangseng-pm', 5, '2026-11-19', '19568.74', '+103.21'),
+      makeDraw('hangseng-pm', 6, '2026-11-18', '19502.39', '+156.68'),
+      makeDraw('hangseng-pm', 7, '2026-11-17', '19318.64', '-175.12'),
+      makeDraw('hangseng-pm', 8, '2026-11-14', '19529.83', '+125.47'),
+      makeDraw('hangseng-pm', 9, '2026-11-13', '19426.90', '-30.65'),
+      makeDraw('hangseng-pm', 10, '2026-11-12', '19489.12', '+135.84'),
+      makeDraw('hangseng-pm', 11, '2026-11-11', '19374.59', '+92.95'),
+    ],
+  },
+  {
+    id: 'taiwan',
+    nameTh: 'หุ้นไต้หวัน',
+    nameEn: 'TAIEX',
+    indexCode: 'TWII',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '12:30 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('taiwan', 1, '2026-11-25', '22914.87', '+164.52'),
+      makeDraw('taiwan', 2, '2026-11-24', '22750.35', '-78.94'),
+      makeDraw('taiwan', 3, '2026-11-21', '22829.29', '+192.11'),
+      makeDraw('taiwan', 4, '2026-11-20', '22637.18', '-46.30'),
+      makeDraw('taiwan', 5, '2026-11-19', '22683.48', '+113.75'),
+      makeDraw('taiwan', 6, '2026-11-18', '22569.73', '+85.19'),
+      makeDraw('taiwan', 7, '2026-11-17', '22484.54', '-102.46'),
+      makeDraw('taiwan', 8, '2026-11-14', '22587.00', '+141.63'),
+      makeDraw('taiwan', 9, '2026-11-13', '22445.37', '-65.28'),
+      makeDraw('taiwan', 10, '2026-11-12', '22510.65', '+97.41'),
+      makeDraw('taiwan', 11, '2026-11-11', '22413.24', '+52.89'),
+    ],
+  },
+  {
+    id: 'korea',
+    nameTh: 'หุ้นเกาหลี',
+    nameEn: 'KOSPI',
+    indexCode: 'KS11',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '13:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('korea', 1, '2026-11-25', '2536.41', '+19.84'),
+      makeDraw('korea', 2, '2026-11-24', '2516.57', '-11.29'),
+      makeDraw('korea', 3, '2026-11-21', '2527.86', '+24.15'),
+      makeDraw('korea', 4, '2026-11-20', '2503.71', '-14.62'),
+      makeDraw('korea', 5, '2026-11-19', '2518.33', '+9.47'),
+      makeDraw('korea', 6, '2026-11-18', '2508.86', '+16.53'),
+      makeDraw('korea', 7, '2026-11-17', '2492.33', '-22.18'),
+      makeDraw('korea', 8, '2026-11-14', '2514.51', '+13.79'),
+      makeDraw('korea', 9, '2026-11-13', '2500.72', '-8.34'),
+      makeDraw('korea', 10, '2026-11-12', '2509.06', '+21.40'),
+      makeDraw('korea', 11, '2026-11-11', '2487.66', '+10.92'),
+    ],
+  },
+  {
+    id: 'singapore',
+    nameTh: 'หุ้นสิงคโปร์',
+    nameEn: 'Straits Times Index',
+    indexCode: 'STI',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '16:00 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('singapore', 1, '2026-11-25', '3742.95', '+21.34'),
+      makeDraw('singapore', 2, '2026-11-24', '3721.61', '-8.47'),
+      makeDraw('singapore', 3, '2026-11-21', '3730.08', '+16.92'),
+      makeDraw('singapore', 4, '2026-11-20', '3713.16', '-13.25'),
+      makeDraw('singapore', 5, '2026-11-19', '3726.41', '+19.80'),
+      makeDraw('singapore', 6, '2026-11-18', '3706.61', '+11.43'),
+      makeDraw('singapore', 7, '2026-11-17', '3695.18', '-17.64'),
+      makeDraw('singapore', 8, '2026-11-14', '3712.82', '+24.19'),
+      makeDraw('singapore', 9, '2026-11-13', '3688.63', '-6.52'),
+      makeDraw('singapore', 10, '2026-11-12', '3695.15', '+14.77'),
+      makeDraw('singapore', 11, '2026-11-11', '3680.38', '+9.11'),
+    ],
+  },
+  {
+    id: 'india',
+    nameTh: 'หุ้นอินเดีย',
+    nameEn: 'BSE SENSEX',
+    indexCode: 'BSESN',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '17:30 น.',
+    region: 'asia',
+    regionLabelTh: 'เอเชีย',
+    defaultHistory: [
+      makeDraw('india', 1, '2026-11-25', '80142.36', '+312.48'),
+      makeDraw('india', 2, '2026-11-24', '79829.88', '-164.22'),
+      makeDraw('india', 3, '2026-11-21', '79994.10', '+428.75'),
+      makeDraw('india', 4, '2026-11-20', '79565.35', '-95.61'),
+      makeDraw('india', 5, '2026-11-19', '79660.96', '+219.34'),
+      makeDraw('india', 6, '2026-11-18', '79441.62', '+187.09'),
+      makeDraw('india', 7, '2026-11-17', '79254.53', '-276.43'),
+      makeDraw('india', 8, '2026-11-14', '79530.96', '+341.82'),
+      makeDraw('india', 9, '2026-11-13', '79189.14', '-118.57'),
+      makeDraw('india', 10, '2026-11-12', '79307.71', '+265.19'),
+      makeDraw('india', 11, '2026-11-11', '79042.52', '+149.86'),
+    ],
+  },
+  {
+    id: 'russia',
+    nameTh: 'หุ้นรัสเซีย',
+    nameEn: 'MOEX Russia',
+    indexCode: 'IMOEX',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '22:45 น.',
+    region: 'europe',
+    regionLabelTh: 'ยุโรป',
+    defaultHistory: [
+      makeDraw('russia', 1, '2026-11-25', '2784.63', '+29.17'),
+      makeDraw('russia', 2, '2026-11-24', '2755.46', '-18.42'),
+      makeDraw('russia', 3, '2026-11-21', '2773.88', '+34.65'),
+      makeDraw('russia', 4, '2026-11-20', '2739.23', '-12.91'),
+      makeDraw('russia', 5, '2026-11-19', '2752.14', '+22.58'),
+      makeDraw('russia', 6, '2026-11-18', '2729.56', '+15.74'),
+      makeDraw('russia', 7, '2026-11-17', '2713.82', '-27.39'),
+      makeDraw('russia', 8, '2026-11-14', '2741.21', '+41.06'),
+      makeDraw('russia', 9, '2026-11-13', '2700.15', '-9.83'),
+      makeDraw('russia', 10, '2026-11-12', '2709.98', '+19.24'),
+      makeDraw('russia', 11, '2026-11-11', '2690.74', '+11.45'),
+    ],
+  },
+  {
+    id: 'germany',
+    nameTh: 'หุ้นเยอรมัน',
+    nameEn: 'DAX 40',
+    indexCode: 'GDAXI',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '23:00 น.',
+    region: 'europe',
+    regionLabelTh: 'ยุโรป',
+    defaultHistory: [
+      makeDraw('germany', 1, '2026-11-25', '19428.51', '+118.74'),
+      makeDraw('germany', 2, '2026-11-24', '19309.77', '-64.29'),
+      makeDraw('germany', 3, '2026-11-21', '19374.06', '+147.82'),
+      makeDraw('germany', 4, '2026-11-20', '19226.24', '-42.16'),
+      makeDraw('germany', 5, '2026-11-19', '19268.40', '+93.55'),
+      makeDraw('germany', 6, '2026-11-18', '19174.85', '+76.38'),
+      makeDraw('germany', 7, '2026-11-17', '19098.47', '-112.91'),
+      makeDraw('germany', 8, '2026-11-14', '19211.38', '+165.44'),
+      makeDraw('germany', 9, '2026-11-13', '19045.94', '-38.67'),
+      makeDraw('germany', 10, '2026-11-12', '19084.61', '+84.12'),
+      makeDraw('germany', 11, '2026-11-11', '19000.49', '+59.23'),
+    ],
+  },
+  {
+    id: 'uk',
+    nameTh: 'หุ้นอังกฤษ',
+    nameEn: 'FTSE 100',
+    indexCode: 'FTSE',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '23:30 น.',
+    region: 'europe',
+    regionLabelTh: 'ยุโรป',
+    defaultHistory: [
+      makeDraw('uk', 1, '2026-11-25', '8264.18', '+47.62'),
+      makeDraw('uk', 2, '2026-11-24', '8216.56', '-28.93'),
+      makeDraw('uk', 3, '2026-11-21', '8245.49', '+61.35'),
+      makeDraw('uk', 4, '2026-11-20', '8184.14', '-19.48'),
+      makeDraw('uk', 5, '2026-11-19', '8203.62', '+36.71'),
+      makeDraw('uk', 6, '2026-11-18', '8166.91', '+29.84'),
+      makeDraw('uk', 7, '2026-11-17', '8137.07', '-44.19'),
+      makeDraw('uk', 8, '2026-11-14', '8181.26', '+53.07'),
+      makeDraw('uk', 9, '2026-11-13', '8128.19', '-15.63'),
+      makeDraw('uk', 10, '2026-11-12', '8143.82', '+41.90'),
+      makeDraw('uk', 11, '2026-11-11', '8101.92', '+22.54'),
+    ],
+  },
+  {
+    id: 'dowjones',
+    nameTh: 'หุ้นดาวโจนส์',
+    nameEn: 'Dow Jones (DJIA)',
+    indexCode: 'DJI',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '04:00 น.',
+    region: 'americas_me',
+    regionLabelTh: 'อเมริกาและตะวันออกกลาง',
+    defaultHistory: [
+      makeDraw('dowjones', 1, '2026-11-25', '43852.61', '+215.49'),
+      makeDraw('dowjones', 2, '2026-11-24', '43637.12', '-118.34'),
+      makeDraw('dowjones', 3, '2026-11-21', '43755.46', '+284.72'),
+      makeDraw('dowjones', 4, '2026-11-20', '43470.74', '-76.19'),
+      makeDraw('dowjones', 5, '2026-11-19', '43546.93', '+162.85'),
+      makeDraw('dowjones', 6, '2026-11-18', '43384.08', '+139.41'),
+      makeDraw('dowjones', 7, '2026-11-17', '43244.67', '-204.58'),
+      makeDraw('dowjones', 8, '2026-11-14', '43449.25', '+248.13'),
+      makeDraw('dowjones', 9, '2026-11-13', '43201.12', '-91.26'),
+      makeDraw('dowjones', 10, '2026-11-12', '43292.38', '+177.64'),
+      makeDraw('dowjones', 11, '2026-11-11', '43114.74', '+124.08'),
+    ],
+  },
+  {
+    id: 'egypt',
+    nameTh: 'หุ้นอียิปต์',
+    nameEn: 'EGX 30',
+    indexCode: 'EGX30',
+    sessionTh: 'ปิดตลาด',
+    closeTimeTh: '20:00 น.',
+    region: 'americas_me',
+    regionLabelTh: 'อเมริกาและตะวันออกกลาง',
+    defaultHistory: [
+      makeDraw('egypt', 1, '2026-11-25', '30642.84', '+184.27'),
+      makeDraw('egypt', 2, '2026-11-24', '30458.57', '-92.41'),
+      makeDraw('egypt', 3, '2026-11-21', '30550.98', '+219.63'),
+      makeDraw('egypt', 4, '2026-11-20', '30331.35', '-64.18'),
+      makeDraw('egypt', 5, '2026-11-19', '30395.53', '+142.79'),
+      makeDraw('egypt', 6, '2026-11-18', '30252.74', '+116.52'),
+      makeDraw('egypt', 7, '2026-11-17', '30136.22', '-158.94'),
+      makeDraw('egypt', 8, '2026-11-14', '30295.16', '+197.35'),
+      makeDraw('egypt', 9, '2026-11-13', '30097.81', '-73.20'),
+      makeDraw('egypt', 10, '2026-11-12', '30171.01', '+128.46'),
+      makeDraw('egypt', 11, '2026-11-11', '30042.55', '+86.11'),
+    ],
+  },
+];
+import type { CustomFormulaSpec, DrawRecord, FormulaDefinition } from '../types/lottery';
+import { STOCK_MARKETS } from '../data/markets';
+import { createFormulaFromSpec } from './formulas';
+
+const CUSTOM_DRAWS_STORAGE_KEY = 'intl_stock_lotto_draws_v1';
+const CUSTOM_FORMULAS_STORAGE_KEY = 'intl_stock_lotto_formulas_v1';
+
+export interface StoredCustomFormula {
+  id: string;
+  name: string;
+  summary: string;
+  spec: CustomFormulaSpec;
+}
+
+export function loadMarketHistories(): Record<string, DrawRecord[]> {
+  const baseline: Record<string, DrawRecord[]> = {};
+  for (const market of STOCK_MARKETS) {
+    baseline[market.id] = [...market.defaultHistory];
+  }
+
+  if (typeof window === 'undefined') {
+    return baseline;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_DRAWS_STORAGE_KEY);
+    if (!raw) return baseline;
+    const parsed = JSON.parse(raw) as Record<string, DrawRecord[]>;
+    if (parsed && typeof parsed === 'object') {
+      for (const market of STOCK_MARKETS) {
+        if (Array.isArray(parsed[market.id])) {
+          baseline[market.id] = parsed[market.id];
+        }
+      }
+    }
+    return baseline;
+  } catch {
+    return baseline;
+  }
+}
+
+export function saveMarketHistories(histories: Record<string, DrawRecord[]>): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(CUSTOM_DRAWS_STORAGE_KEY, JSON.stringify(histories));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+
+export function loadCustomFormulas(): FormulaDefinition[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = window.localStorage.getItem(CUSTOM_FORMULAS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as StoredCustomFormula[];
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .filter((item) => item && item.id && item.name && item.spec)
+      .map((item) =>
+        createFormulaFromSpec(item.id, item.name, item.summary || '', item.spec, true)
+      );
+  } catch {
+    return [];
+  }
+}
+
+export function saveCustomFormulas(formulas: FormulaDefinition[]): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const serializable: StoredCustomFormula[] = formulas
+      .filter((f) => f.isCustom && f.customSpec)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        summary: f.summary,
+        spec: f.customSpec!,
+      }));
+    window.localStorage.setItem(CUSTOM_FORMULAS_STORAGE_KEY, JSON.stringify(serializable));
+  } catch {
+    // Ignore storage quota errors
+  }
+}
+import type { DrawRecord, StockMarket } from '../types/lottery';
+
+export const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+export interface BangkokTimeParts {
+  year: number;
+  month: number; // 1-12
+  day: number; // 1-31
+  dayOfWeek: number; // 0 (Sun) - 6 (Sat)
+  hour: number;
+  minute: number;
+  minutesOfDay: number;
+  dateStr: string; // YYYY-MM-DD
+  timeStr: string; // HH:MM
+}
+
+export type RoundPhase = 'pre_close_1h' | 'after_close' | 'waiting';
+
+export interface MarketRoundSchedule {
+  phase: RoundPhase;
+  minutesUntilClose: number;
+  targetDateStr: string;
+  nextRoundLabelTh: string;
+  isPreCloseWindow: boolean;
+  hasClosedToday: boolean;
+}
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+export function formatYmd(year: number, month: number, day: number): string {
+  return `${year}-${pad2(month)}-${pad2(day)}`;
+}
+
+export function getBangkokParts(nowMs: number): BangkokTimeParts {
+  const bkk = new Date(nowMs + BANGKOK_OFFSET_MS);
+  const year = bkk.getUTCFullYear();
+  const month = bkk.getUTCMonth() + 1;
+  const day = bkk.getUTCDate();
+  const dayOfWeek = bkk.getUTCDay();
+  const hour = bkk.getUTCHours();
+  const minute = bkk.getUTCMinutes();
+  return {
+    year,
+    month,
+    day,
+    dayOfWeek,
+    hour,
+    minute,
+    minutesOfDay: hour * 60 + minute,
+    dateStr: formatYmd(year, month, day),
+    timeStr: `${pad2(hour)}:${pad2(minute)}`,
+  };
+}
+
+export function getBangkokTimestampMs(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number
+): number {
+  return Date.UTC(year, month - 1, day, hour, minute) - BANGKOK_OFFSET_MS;
+}
+
+function addDaysYmd(
+  year: number,
+  month: number,
+  day: number,
+  deltaDays: number
+): { year: number; month: number; day: number; dayOfWeek: number; dateStr: string } {
+  const dt = new Date(Date.UTC(year, month - 1, day + deltaDays));
+  const y = dt.getUTCFullYear();
+  const m = dt.getUTCMonth() + 1;
+  const d = dt.getUTCDate();
+  return {
+    year: y,
+    month: m,
+    day: d,
+    dayOfWeek: dt.getUTCDay(),
+    dateStr: formatYmd(y, m, d),
+  };
+}
+
+export function parseCloseTime(closeTimeTh: string): {
+  hour: number;
+  minute: number;
+  minutesOfDay: number;
+  timeStr: string;
+} {
+  const match = closeTimeTh.match(/(\d{1,2}):(\d{2})/);
+  const hour = match ? Number(match[1]) : 16;
+  const minute = match ? Number(match[2]) : 0;
+  return {
+    hour,
+    minute,
+    minutesOfDay: hour * 60 + minute,
+    timeStr: `${pad2(hour)}:${pad2(minute)}`,
+  };
+}
+
+export function getMarketRoundSchedule(
+  market: StockMarket,
+  latestDraw: DrawRecord | undefined,
+  nowMs: number = Date.now()
+): MarketRoundSchedule {
+  const now = getBangkokParts(nowMs);
+  const close = parseCloseTime(market.closeTimeTh);
+  const tomorrow = addDaysYmd(now.year, now.month, now.day, 1);
+
+  let targetY = now.year;
+  let targetM = now.month;
+  let targetD = now.day;
+  let hasClosedToday = false;
+
+  if (market.region === 'thai') {
+    const isDrawDay = now.day === 1 || now.day === 16;
+    hasClosedToday = isDrawDay && now.minutesOfDay >= close.minutesOfDay;
+
+    if (now.day === 1 && now.minutesOfDay < close.minutesOfDay) {
+      targetD = 1;
+    } else if (now.day < 16 || (now.day === 16 && now.minutesOfDay < close.minutesOfDay)) {
+      targetD = 16;
+    } else {
+      targetM = now.month === 12 ? 1 : now.month + 1;
+      targetY = now.month === 12 ? now.year + 1 : now.year;
+      targetD = 1;
+    }
+  } else if (close.minutesOfDay < 360) {
+    const isSessionDay = now.dayOfWeek >= 2 && now.dayOfWeek <= 6;
+    hasClosedToday = isSessionDay && now.minutesOfDay >= close.minutesOfDay;
+
+    if (isSessionDay && now.minutesOfDay < close.minutesOfDay) {
+      // Today's 04:00 close hasn't happened yet
+    } else {
+      let delta = 1;
+      while (delta <= 4) {
+        const next = addDaysYmd(now.year, now.month, now.day, delta);
+        if (next.dayOfWeek >= 2 && next.dayOfWeek <= 6) {
+          targetY = next.year;
+          targetM = next.month;
+          targetD = next.day;
+          break;
+        }
+        delta++;
+      }
+    }
+  } else {
+    const isTradingWeekday = now.dayOfWeek >= 1 && now.dayOfWeek <= 5;
+    hasClosedToday = isTradingWeekday && now.minutesOfDay >= close.minutesOfDay;
+
+    if (isTradingWeekday && now.minutesOfDay < close.minutesOfDay) {
+      // Today's close hasn't happened yet
+    } else {
+      let delta = 1;
+      while (delta <= 4) {
+        const next = addDaysYmd(now.year, now.month, now.day, delta);
+        if (next.dayOfWeek >= 1 && next.dayOfWeek <= 5) {
+          targetY = next.year;
+          targetM = next.month;
+          targetD = next.day;
+          break;
+        }
+        delta++;
+      }
+    }
+  }
+
+  const targetDateStr = formatYmd(targetY, targetM, targetD);
+  const targetMs = getBangkokTimestampMs(
+    targetY,
+    targetM,
+    targetD,
+    close.hour,
+    close.minute
+  );
+  const minutesUntilClose = Math.max(0, Math.ceil((targetMs - nowMs) / 60000));
+  const isPreCloseWindow = minutesUntilClose > 0 && minutesUntilClose <= 60;
+
+  let nextRoundLabelTh: string;
+  if (targetDateStr === now.dateStr) {
+    nextRoundLabelTh = `วันนี้ ${close.timeStr} น.`;
+  } else if (targetDateStr === tomorrow.dateStr) {
+    nextRoundLabelTh = `พรุ่งนี้ ${close.timeStr} น.`;
+  } else {
+    nextRoundLabelTh = `${targetDateStr} ${close.timeStr} น.`;
+  }
+
+  const alreadyRecordedToday = latestDraw?.date === now.dateStr;
+  const phase: RoundPhase = isPreCloseWindow
+    ? 'pre_close_1h'
+    : hasClosedToday || alreadyRecordedToday
+    ? 'after_close'
+    : 'waiting';
+
+  return {
+    phase,
+    minutesUntilClose,
+    targetDateStr,
+    nextRoundLabelTh,
+    isPreCloseWindow,
+    hasClosedToday: hasClosedToday || alreadyRecordedToday,
+  };
+}
+
+export function mergeAutoDrawRecord(
+  currentHistory: DrawRecord[],
+  marketId: string,
+  incoming: {
+    date: string;
+    indexClose: string;
+    indexChange: string;
+    top3: string;
+    top2: string;
+    bottom2: string;
+  }
+): { history: DrawRecord[]; didChange: boolean } {
+  const autoId = `${marketId}-auto-${incoming.date}`;
+  const existingIdx = currentHistory.findIndex((item) => item.date === incoming.date);
+
+  if (existingIdx !== -1) {
+    const existing = currentHistory[existingIdx];
+    const isAutoEntry = existing.id.startsWith(`${marketId}-auto-`);
+    if (!isAutoEntry) {
+      return { history: currentHistory, didChange: false };
+    }
+    if (
+      existing.top3 === incoming.top3 &&
+      existing.bottom2 === incoming.bottom2 &&
+      existing.indexClose === incoming.indexClose &&
+      existing.indexChange === incoming.indexChange
+    ) {
+      return { history: currentHistory, didChange: false };
+    }
+    const updated = currentHistory.map((item, idx) =>
+      idx === existingIdx
+        ? {
+            ...item,
+            indexClose: incoming.indexClose,
+            indexChange: incoming.indexChange,
+            top3: incoming.top3,
+            top2: incoming.top2,
+            bottom2: incoming.bottom2,
+          }
+        : item
+    );
+    return { history: updated, didChange: true };
+  }
+
+  const nextRecord: DrawRecord = {
+    id: autoId,
+    date: incoming.date,
+    indexClose: incoming.indexClose,
+    indexChange: incoming.indexChange,
+    top3: incoming.top3,
+    top2: incoming.top2,
+    bottom2: incoming.bottom2,
+  };
+
+  const merged = [nextRecord, ...currentHistory].sort((a, b) =>
+    b.date.localeCompare(a.date)
+  );
+  return { history: merged, didChange: true };
+}
+import type {
+  BacktestDrawOutcome,
+  BacktestSummary,
+  CalculationStep,
+  CustomFormulaSpec,
+  DigitPosition,
+  DrawRecord,
+  FocusedThreeDigitPlan,
+  FormulaDefinition,
+  FormulaEvaluationContext,
+  FormulaResult,
+} from '../types/lottery';
+
+export const POSITION_LABELS_TH: Record<DigitPosition, string> = {
+  hundredsTop: 'ร้อยบน',
+  tensTop: 'สิบบน',
+  unitsTop: 'หน่วยบน',
+  tensBottom: 'สิบล่าง',
+  unitsBottom: 'หน่วยล่าง',
+};
+
+export interface ExtractedIndexResult {
+  valid: boolean;
+  error?: string;
+  top3: string;
+  top2: string;
+  bottom2: string;
+  normalizedIndex: string;
+  normalizedChange: string;
+}
+
+function parseNumericDecimalParts(raw: string): {
+  valid: boolean;
+  sign: '' | '+' | '-';
+  intPart: string;
+  decPart: string;
+} {
+  const cleaned = raw.replace(/[\s,]/g, '').trim();
+  if (!cleaned) {
+    return { valid: false, sign: '', intPart: '', decPart: '' };
+  }
+  const match = cleaned.match(/^([+-])?(\d+)(?:\.(\d+))?$/);
+  if (!match) {
+    return { valid: false, sign: '', intPart: '', decPart: '' };
+  }
+  const sign = (match[1] as '' | '+' | '-') || '';
+  const intPart = match[2];
+  const rawDec = match[3] || '';
+  const decPart = (rawDec + '00').slice(0, 2);
+  return { valid: true, sign, intPart, decPart };
+}
+
+export function extractDigitsFromIndex(
+  indexClose: string,
+  indexChange: string
+): ExtractedIndexResult {
+  const parsedIndex = parseNumericDecimalParts(indexClose);
+  if (!parsedIndex.valid) {
+    return {
+      valid: false,
+      error: 'กรุณากรอกค่าดัชนีปิดตลาดเป็นตัวเลข เช่น 38425.74',
+      top3: '',
+      top2: '',
+      bottom2: '',
+      normalizedIndex: '',
+      normalizedChange: '',
+    };
+  }
+
+  const parsedChange = parseNumericDecimalParts(indexChange);
+  if (!parsedChange.valid) {
+    return {
+      valid: false,
+      error: 'กรุณากรอกค่าเปลี่ยนแปลงเป็นตัวเลข เช่น +142.38 หรือ -24.15',
+      top3: '',
+      top2: '',
+      bottom2: '',
+      normalizedIndex: '',
+      normalizedChange: '',
+    };
+  }
+
+  const lastIntDigit = parsedIndex.intPart.slice(-1);
+  const top2 = parsedIndex.decPart;
+  const top3 = `${lastIntDigit}${top2}`;
+  const bottom2 = parsedChange.decPart;
+
+  const formattedInt = Number(parsedIndex.intPart).toLocaleString('en-US');
+  const normalizedIndex = `${formattedInt}.${parsedIndex.decPart}`;
+  const changeSign = parsedChange.sign || '+';
+  const formattedChangeInt = Number(parsedChange.intPart).toLocaleString('en-US');
+  const normalizedChange = `${changeSign}${formattedChangeInt}.${parsedChange.decPart}`;
+
+  return {
+    valid: true,
+    top3,
+    top2,
+    bottom2,
+    normalizedIndex,
+    normalizedChange,
+  };
+}
+
+export function validateDrawDigits(top3: string, bottom2: string): {
+  valid: boolean;
+  error?: string;
+} {
+  if (!/^\d{3}$/.test(top3)) {
+    return { valid: false, error: 'เลข 3 ตัวบนต้องเป็นตัวเลข 3 หลัก (000–999)' };
+  }
+  if (!/^\d{2}$/.test(bottom2)) {
+    return { valid: false, error: 'เลข 2 ตัวล่างต้องเป็นตัวเลข 2 หลัก (00–99)' };
+  }
+  return { valid: true };
+}
+
+export function extractPositionDigits(draw: {
+  top3: string;
+  bottom2: string;
+}): Record<DigitPosition, number> {
+  const t3 = draw.top3.padStart(3, '0').slice(-3);
+  const b2 = draw.bottom2.padStart(2, '0').slice(-2);
+  return {
+    hundredsTop: Number(t3[0]),
+    tensTop: Number(t3[1]),
+    unitsTop: Number(t3[2]),
+    tensBottom: Number(b2[0]),
+    unitsBottom: Number(b2[1]),
+  };
+}
+
+function mod10(n: number): number {
+  return ((n % 10) + 10) % 10;
+}
+
+function uniqueDigits(digits: number[]): number[] {
+  const seen = new Set<number>();
+  const out: number[] = [];
+  for (const d of digits) {
+    const m = mod10(d);
+    if (!seen.has(m)) {
+      seen.add(m);
+      out.push(m);
+    }
+  }
+  return out;
+}
+
+export function evaluateCustomSpec(
+  spec: CustomFormulaSpec,
+  draw: { top3: string; bottom2: string }
+): FormulaResult {
+  const pos = extractPositionDigits(draw);
+  const termsText: string[] = [];
+  let sum = spec.constantOffset;
+
+  for (const term of spec.terms) {
+    const val = pos[term.position];
+    const prod = val * term.multiplier;
+    sum += prod;
+    if (term.multiplier === 1) {
+      termsText.push(`${POSITION_LABELS_TH[term.position]}(${val})`);
+    } else {
+      termsText.push(`${POSITION_LABELS_TH[term.position]}(${val})×${term.multiplier}`);
+    }
+  }
+
+  if (spec.constantOffset !== 0) {
+    termsText.push(`คงที่(${spec.constantOffset >= 0 ? `+${spec.constantOffset}` : spec.constantOffset})`);
+  }
+
+  const baseDigit = mod10(sum);
+  const derived = [baseDigit, ...spec.secondaryOffsets.map((off) => mod10(baseDigit + off))];
+  const keyDigits = uniqueDigits(derived);
+
+  const steps: CalculationStep[] = [
+    {
+      label: 'ดึงหลักเลขฐานจากงวดอ้างอิง',
+      expression: `บน ${draw.top3} / ล่าง ${draw.bottom2}`,
+      result: `ร้อย=${pos.hundredsTop}, สิบ=${pos.tensTop}, หน่วย=${pos.unitsTop} | สิบล่าง=${pos.tensBottom}, หน่วยล่าง=${pos.unitsBottom}`,
+    },
+    {
+      label: 'คำนวณผลรวมตามน้ำหนักสูตร',
+      expression: termsText.length > 0 ? `${termsText.join(' + ')} = ${sum}` : `${sum}`,
+      result: `หลักหน่วยฐาน = ${baseDigit}`,
+    },
+    {
+      label: 'แตกเลขเด่นประจำงวด',
+      expression:
+        spec.secondaryOffsets.length > 0
+          ? `${baseDigit} และบวกเพิ่ม ${spec.secondaryOffsets.map((o) => `+${o}`).join(', ')}`
+          : `ใช้เลขเด่นตัวเดียว`,
+      result: keyDigits.join(' - '),
+    },
+  ];
+
+  return {
+    keyDigits,
+    primaryDigit: keyDigits[0],
+    steps,
+  };
+}
+
+export function buildCustomRuleText(spec: CustomFormulaSpec): string {
+  const parts = spec.terms.map((t) =>
+    t.multiplier === 1
+      ? POSITION_LABELS_TH[t.position]
+      : `${POSITION_LABELS_TH[t.position]}×${t.multiplier}`
+  );
+  if (spec.constantOffset !== 0) {
+    parts.push(`${spec.constantOffset > 0 ? '+' : ''}${spec.constantOffset}`);
+  }
+  const offsetNote =
+    spec.secondaryOffsets.length > 0
+      ? ` (เพิ่ม ${spec.secondaryOffsets.map((o) => `+${o}`).join(', ')})`
+      : '';
+  return `${parts.join(' + ')} เอาหลักหน่วย${offsetNote}`;
+}
+
+export function createFormulaFromSpec(
+  id: string,
+  name: string,
+  summary: string,
+  spec: CustomFormulaSpec,
+  isCustom = true
+): FormulaDefinition {
+  return {
+    id,
+    name,
+    summary,
+    ruleText: buildCustomRuleText(spec),
+    isCustom,
+    customSpec: spec,
+    evaluate: (draw) => evaluateCustomSpec(spec, draw),
+  };
+}
+
+export const BUILTIN_FORMULAS: FormulaDefinition[] = [
+  createFormulaFromSpec(
+    'f-pivot-top-bottom',
+    'สูตรพิกัดบน-ล่างทบฐาน',
+    'นำหลักร้อยบน + สิบบน + หน่วยล่าง แล้วขยายระยะ +1 และ +4 สำหรับรูดหรือเจาะคู่',
+    {
+      terms: [
+        { position: 'hundredsTop', multiplier: 1 },
+        { position: 'tensTop', multiplier: 1 },
+        { position: 'unitsBottom', multiplier: 1 },
+      ],
+      constantOffset: 0,
+      secondaryOffsets: [1, 4],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-double-hundreds',
+    'สูตรหลักร้อยคูณสองดึงล่าง',
+    'เน้นน้ำหนักหลักร้อยบน ×2 ร่วมกับสิบล่าง และคงที่ +3 เหมาะกับหุ้นรอบเช้า-บ่าย',
+    {
+      terms: [
+        { position: 'hundredsTop', multiplier: 2 },
+        { position: 'tensBottom', multiplier: 1 },
+      ],
+      constantOffset: 3,
+      secondaryOffsets: [2, 5],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-tail-mirror',
+    'สูตรรูดท้ายบนคู่หน่วยล่าง',
+    'ผูกหลักหน่วยบนกับหน่วยล่าง คูณน้ำหนักท้ายตลาด ลดความผันผวนช่วงปิดดัชนี',
+    {
+      terms: [
+        { position: 'unitsTop', multiplier: 2 },
+        { position: 'unitsBottom', multiplier: 1 },
+      ],
+      constantOffset: 1,
+      secondaryOffsets: [3, 6],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-tens-cross',
+    'สูตรไขว้สิบบนสิบล่าง',
+    'จับคู่หลักสิบทั้งสองฝั่งคูณทบ แล้วเดินหน้าทีละ +1 เพื่อหาเลขวิ่งยืนพื้น',
+    {
+      terms: [
+        { position: 'tensTop', multiplier: 1 },
+        { position: 'tensBottom', multiplier: 2 },
+      ],
+      constantOffset: 2,
+      secondaryOffsets: [1, 2],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-five-digit-sum',
+    'สูตรรวมกำลังห้าหลัก',
+    'รวมเลขทั้ง 5 ตำแหน่งของงวดก่อนแล้วหาเศษหลักหน่วย เดินหน้า +3 และ +7',
+    {
+      terms: [
+        { position: 'hundredsTop', multiplier: 1 },
+        { position: 'tensTop', multiplier: 1 },
+        { position: 'unitsTop', multiplier: 1 },
+        { position: 'tensBottom', multiplier: 1 },
+        { position: 'unitsBottom', multiplier: 1 },
+      ],
+      constantOffset: 0,
+      secondaryOffsets: [3, 7],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-spread-diff',
+    'สูตรผลต่างทบเจ็ด',
+    'ใช้หน่วยบนทบ 3 เท่าบวกสิบบน และคงที่ +7 เพื่อจับจังหวะกลับตัวของดัชนี',
+    {
+      terms: [
+        { position: 'tensTop', multiplier: 1 },
+        { position: 'unitsTop', multiplier: 3 },
+      ],
+      constantOffset: 7,
+      secondaryOffsets: [2, 4],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-europe-close',
+    'สูตรปิดตลาดยุโรป-ดาวโจนส์',
+    'ออกแบบสำหรับรอบดึก (เยอรมัน อังกฤษ ดาวโจนส์) เน้นร้อยบนและหน่วยล่างคูณสอง',
+    {
+      terms: [
+        { position: 'hundredsTop', multiplier: 1 },
+        { position: 'unitsBottom', multiplier: 2 },
+      ],
+      constantOffset: 5,
+      secondaryOffsets: [1, 5],
+    },
+    false
+  ),
+  createFormulaFromSpec(
+    'f-double-anchor',
+    'สูตรเจาะสองตัวเน้นสิบ',
+    'ใช้สิบบน ×2 + ร้อยบน + คงที่ +4 เพื่อคัดกรองเลขเด่น 2 ตัวตรง',
+    {
+      terms: [
+        { position: 'hundredsTop', multiplier: 1 },
+        { position: 'tensTop', multiplier: 2 },
+      ],
+      constantOffset: 4,
+      secondaryOffsets: [3, 5],
+    },
+    false
+  ),
+  {
+    id: 'f-market-direction',
+    name: 'สูตรจับทิศทางดัชนีและแรงส่งตลาด',
+    summary:
+      'วิเคราะห์ทิศทางตลาดจริง (บวก/ลบ) ร่วมกับแรงเหวี่ยงโมเมนตัม 3 งวดล่าสุด และอัปเดตดัชนีเรียลไทม์ก่อนผลออก 1 ชม.',
+    ruleText: 'ทิศทางดัชนี (+/-) + แรงเหวี่ยงโมเมนตัม 3 งวด + ฐานบนล่าง',
+    isCustom: false,
+    usesLiveTrend: true,
+    evaluate: (draw, context) => {
+      const pos = extractPositionDigits(draw);
+      const history = context?.history ?? [];
+      const live = context?.livePreClose;
+      const effectivePos = live
+        ? extractPositionDigits({ top3: live.top3, bottom2: live.bottom2 })
+        : pos;
+      const rawChange = (live?.indexChange ?? context?.indexChange ?? '').trim();
+
+      let dirSign = 1;
+      let dirReason = 'แรงส่งฝั่งบวก (+1)';
+      if (rawChange.startsWith('-')) {
+        dirSign = -1;
+        dirReason = live
+          ? `ดัชนีเรียลไทม์ฝั่งลบ ${rawChange} (${live.timeLabelTh})`
+          : 'แรงปรับฐานฝั่งลบ (-1)';
+      } else if (!rawChange || rawChange === '-') {
+        if (history.length >= 2) {
+          const prevVal = Number(history[1].top3);
+          const currVal = Number(draw.top3);
+          if (currVal < prevVal) {
+            dirSign = -1;
+            dirReason = `เทียบงวดก่อนหน้าลดลง (${currVal} < ${prevVal})`;
+          } else {
+            dirSign = 1;
+            dirReason = `เทียบงวดก่อนหน้าเพิ่มขึ้น (${currVal} ≥ ${prevVal})`;
+          }
+        }
+      } else {
+        dirReason = live
+          ? `ดัชนีเรียลไทม์ปิดบวก ${rawChange} (${live.timeLabelTh})`
+          : `ดัชนีปิดบวก ${rawChange} (+1)`;
+      }
+
+      const momentumSource = live
+        ? [{ top3: live.top3, bottom2: live.bottom2 }, ...history]
+        : history;
+      const recent = momentumSource.slice(0, 3);
+      let deltaSum = 0;
+      if (recent.length >= 2) {
+        for (let i = 0; i < recent.length - 1; i++) {
+          const newer = extractPositionDigits(recent[i]);
+          const older = extractPositionDigits(recent[i + 1]);
+          deltaSum += newer.unitsTop - older.unitsTop + (newer.tensTop - older.tensTop);
+        }
+      }
+      const momentumOffset = mod10(Math.round(deltaSum) + dirSign);
+
+      const baseSum =
+        effectivePos.tensTop + effectivePos.unitsTop + pos.unitsBottom + momentumOffset;
+      const d0 = mod10(baseSum);
+      const d1 = mod10(d0 + (dirSign > 0 ? 2 : 8));
+      const d2 = mod10(
+        effectivePos.hundredsTop + pos.tensBottom + (dirSign > 0 ? 1 : 9)
+      );
+      const keyDigits = uniqueDigits([d0, d1, d2]);
+
+      const steps: CalculationStep[] = [
+        {
+          label: live
+            ? 'ตรวจสอบทิศทางตลาดจริง (อัปเดต 1 ชม. ก่อนผลออก)'
+            : 'ตรวจสอบทิศทางตลาดจริง',
+          expression: live
+            ? `ดัชนีล่าสุด ${live.indexClose} (${rawChange})`
+            : rawChange && rawChange !== '-'
+            ? `ค่าเปลี่ยนแปลง ${rawChange}`
+            : `อ้างอิงงวด ${draw.top3}`,
+          result: dirReason,
+        },
+        {
+          label: 'คำนวณแรงเหวี่ยงโมเมนตัม 3 งวด',
+          expression: `ผลต่างสะสม ${deltaSum} + ทิศทาง(${dirSign > 0 ? '+1' : '-1'})`,
+          result: `ค่าชดเชยแนวโน้ม = ${momentumOffset}`,
+        },
+        {
+          label: 'สรุปเลขเด่นตามกระแสตลาด',
+          expression: live
+            ? `สิบเรียลไทม์(${effectivePos.tensTop}) + หน่วยเรียลไทม์(${effectivePos.unitsTop}) + หน่วยล่าง(${pos.unitsBottom}) + ชดเชย(${momentumOffset}) = ${baseSum}`
+            : `สิบบน(${pos.tensTop}) + หน่วยบน(${pos.unitsTop}) + หน่วยล่าง(${pos.unitsBottom}) + ชดเชย(${momentumOffset}) = ${baseSum}`,
+          result: keyDigits.join(' - '),
+        },
+      ];
+
+      return {
+        keyDigits,
+        primaryDigit: keyDigits[0],
+        steps,
+      };
+    },
+  },
+  {
+    id: 'f-trend-reversal',
+    name: 'สูตรแนวโน้มความถี่และจังหวะกลับตัว',
+    summary:
+      'วิเคราะห์ความถี่สะสมถ่วงน้ำหนัก 10 งวดล่าสุดของตลาดจริง ผสานเลขค้างรอบกลับตัว และอัปเดตก่อนผลออก 1 ชม.',
+    ruleText: 'เลขมาแรงถ่วงน้ำหนัก 10 งวด + เลขค้างรอบกลับตัว + ฐานหน่วยล่าง',
+    isCustom: false,
+    usesLiveTrend: true,
+    evaluate: (draw, context) => {
+      const pos = extractPositionDigits(draw);
+      const history = context?.history ?? [];
+      const live = context?.livePreClose;
+      const baseSample =
+        history.length > 0 ? history : [{ top3: draw.top3, bottom2: draw.bottom2 }];
+      const sample = live
+        ? [{ top3: live.top3, bottom2: live.bottom2 }, ...baseSample].slice(0, 10)
+        : baseSample.slice(0, 10);
+
+      const weightedFreq = new Array<number>(10).fill(0);
+      const lastSeenGap = new Array<number>(10).fill(sample.length + 1);
+
+      sample.forEach((item, idx) => {
+        const weight = Math.max(1, 10 - idx);
+        const digits = `${item.top3}${item.bottom2}`.split('').map(Number);
+        for (const d of digits) {
+          if (!Number.isNaN(d)) {
+            weightedFreq[d] += weight;
+            if (lastSeenGap[d] > idx) {
+              lastSeenGap[d] = idx;
+            }
+          }
+        }
+      });
+
+      const hotDigit = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].sort(
+        (a, b) => weightedFreq[b] - weightedFreq[a] || a - b
+      )[0];
+
+      const coldReversalDigit = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].sort(
+        (a, b) => lastSeenGap[b] - lastSeenGap[a] || a - b
+      )[0];
+
+      const livePos = live
+        ? extractPositionDigits({ top3: live.top3, bottom2: live.bottom2 })
+        : pos;
+      const anchorDigit = mod10(hotDigit + livePos.unitsBottom + pos.tensTop);
+      const keyDigits = uniqueDigits([hotDigit, coldReversalDigit, anchorDigit]);
+
+      const steps: CalculationStep[] = [
+        {
+          label: live
+            ? 'วิเคราะห์ความถี่ + ดัชนีเรียลไทม์ (ก่อนผลออก 1 ชม.)'
+            : 'วิเคราะห์ความถี่ถ่วงน้ำหนักตามตลาดจริง',
+          expression: live
+            ? `ผสานดัชนี ${live.indexClose} (${live.indexChange}) กับ ${sample.length} งวด`
+            : `ประมวลผลสถิติย้อนหลัง ${sample.length} งวดล่าสุด`,
+          result: `เลขกระแสแรงสุด = ${hotDigit} (คะแนน ${weightedFreq[hotDigit]})`,
+        },
+        {
+          label: 'ตรวจจับเลขค้างรอบจังหวะกลับตัว',
+          expression: `เลขที่ห่างหายจากผลออกรางวัลนานที่สุด`,
+          result: `เลขรอกลับตัว = ${coldReversalDigit} (เว้น ${lastSeenGap[coldReversalDigit]} งวด)`,
+        },
+        {
+          label: 'ผสานฐานงวดล่าสุดเป็นเลขเด่น 3 หลัก',
+          expression: live
+            ? `กระแส(${hotDigit}) + สิบบน(${pos.tensTop}) + หน่วยล่างเรียลไทม์(${livePos.unitsBottom})`
+            : `กระแส(${hotDigit}) + สิบบน(${pos.tensTop}) + หน่วยล่าง(${pos.unitsBottom})`,
+          result: keyDigits.join(' - '),
+        },
+      ];
+
+      return {
+        keyDigits,
+        primaryDigit: keyDigits[0],
+        steps,
+      };
+    },
+  },
+];
+
+export interface GeneratedNumberSets {
+  sweep19: string[];
+  pairedTwoDigits: string[];
+  threeDigits: string[];
+}
+
+export function generatePairSets(
+  keyDigits: number[],
+  baseDraw: { top3: string; bottom2: string },
+  includeReverse: boolean,
+  priorHistory: DrawRecord[] = []
+): GeneratedNumberSets {
+  if (keyDigits.length === 0) {
+    return { sweep19: [], pairedTwoDigits: [], threeDigits: [] };
+  }
+
+  const primary = mod10(keyDigits[0]);
+  const sweepSet = new Set<string>();
+  for (let i = 0; i <= 9; i++) {
+    sweepSet.add(`${primary}${i}`);
+    sweepSet.add(`${i}${primary}`);
+  }
+  const sweep19 = Array.from(sweepSet).sort();
+
+  const pos = extractPositionDigits(baseDraw);
+  const secondary = mod10(keyDigits[1] ?? primary + 2);
+  const tertiary = mod10(keyDigits[2] ?? primary + 5);
+
+  const tensScores = new Array<number>(10).fill(0);
+  const unitsScores = new Array<number>(10).fill(0);
+  tensScores[primary] += 5;
+  tensScores[secondary] += 3.5;
+  tensScores[pos.tensTop] += 2.2;
+  unitsScores[secondary] += 4.2;
+  unitsScores[tertiary] += 4.0;
+  unitsScores[primary] += 3.0;
+  unitsScores[pos.unitsTop] += 2.2;
+  unitsScores[pos.unitsBottom] += 2.0;
+
+  priorHistory.slice(0, 12).forEach((draw, idx) => {
+    const t2 = draw.top2.padStart(2, '0').slice(-2);
+    const w = Math.max(0.5, 1.8 - idx * 0.1);
+    const tDigit = Number(t2[0]);
+    const uDigit = Number(t2[1]);
+    if (!Number.isNaN(tDigit)) tensScores[tDigit] += w;
+    if (!Number.isNaN(uDigit)) unitsScores[uDigit] += w;
+  });
+
+  const candidateScores = new Map<string, number>();
+  const digitPool = uniqueDigits([
+    primary,
+    secondary,
+    tertiary,
+    pos.unitsTop,
+    pos.unitsBottom,
+    pos.tensTop,
+  ]);
+
+  for (const t of digitPool) {
+    for (const u of digitPool) {
+      const pair = `${t}${u}`;
+      const bonus = t === primary || u === primary ? 1.5 : 0;
+      const score = tensScores[t] + unitsScores[u] + bonus;
+      candidateScores.set(pair, score);
+    }
+  }
+
+  const sortedPairs = Array.from(candidateScores.entries())
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([pair]) => pair);
+
+  const firstPair = sortedPairs[0] ?? `${primary}${secondary}`;
+  let secondPair = sortedPairs.find((p) => p !== firstPair) ?? `${secondary}${tertiary}`;
+
+  if (includeReverse) {
+    const revFirst = `${firstPair[1]}${firstPair[0]}`;
+    if (revFirst !== firstPair) {
+      secondPair = revFirst;
+    }
+  }
+
+  const pairedTwoDigits = [firstPair, secondPair];
+
+  const d0 = keyDigits[0];
+  const d1 = keyDigits[1] ?? mod10(d0 + 2);
+  const d2 = keyDigits[2] ?? mod10(d0 + 5);
+  const anchorA = pos.unitsTop;
+  const anchorB = pos.unitsBottom;
+
+  const threeDigitCandidates = [
+    `${d0}${d1}${d2}`,
+    `${d0}${d1}${anchorA}`,
+    `${d0}${d2}${anchorB}`,
+    `${d1}${d0}${anchorB}`,
+    `${anchorA}${d0}${d1}`,
+    `${d2}${d1}${d0}`,
+  ];
+  const threeDigits = Array.from(new Set(threeDigitCandidates));
+
+  return {
+    sweep19,
+    pairedTwoDigits,
+    threeDigits,
+  };
+}
+
+export function generateFocusedThreeDigitSets(
+  keyDigits: number[],
+  baseDraw: { top3: string; bottom2: string },
+  priorHistory: DrawRecord[]
+): FocusedThreeDigitPlan {
+  if (keyDigits.length === 0) {
+    return {
+      hundredsCandidates: [],
+      tensCandidates: [],
+      unitsCandidates: [],
+      focused8: [],
+      positional27: [],
+    };
+  }
+
+  const pos = extractPositionDigits(baseDraw);
+  const d0 = mod10(keyDigits[0]);
+  const d1 = mod10(keyDigits[1] ?? d0 + 1);
+  const d2 = mod10(keyDigits[2] ?? d0 + 4);
+
+  const scorePosition = (
+    positionIndex: 0 | 1 | 2,
+    formulaAnchors: [number, number][],
+    baseAnchor: number
+  ): { candidates: number[]; scores: number[] } => {
+    const scores = new Array<number>(10).fill(0);
+
+    for (const [digit, weight] of formulaAnchors) {
+      scores[mod10(digit)] += weight;
+    }
+
+    scores[mod10(baseAnchor)] += 2.2;
+    scores[mod10(baseAnchor + d0)] += 2.5;
+
+    const sample = priorHistory.slice(0, 15);
+    sample.forEach((draw, idx) => {
+      const t3 = draw.top3.padStart(3, '0').slice(-3);
+      const digit = Number(t3[positionIndex]);
+      if (!Number.isNaN(digit)) {
+        const recencyWeight = Math.max(0.6, 2.0 - idx * 0.1);
+        scores[digit] += recencyWeight;
+      }
+    });
+
+    for (let i = 0; i < sample.length - 1; i++) {
+      const nextDraw = sample[i];
+      const prevDraw = sample[i + 1];
+      const prevDigit = Number(prevDraw.top3.padStart(3, '0')[positionIndex]);
+      const nextDigit = Number(nextDraw.top3.padStart(3, '0')[positionIndex]);
+      if (prevDigit === baseAnchor && !Number.isNaN(nextDigit)) {
+        scores[nextDigit] += 2.2;
+      }
+    }
+
+    const ranked = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].sort((a, b) => {
+      const diff = scores[b] - scores[a];
+      if (Math.abs(diff) > 0.001) return diff;
+      const aInFormula = keyDigits.indexOf(a);
+      const bInFormula = keyDigits.indexOf(b);
+      if (aInFormula !== -1 && bInFormula === -1) return -1;
+      if (bInFormula !== -1 && aInFormula === -1) return 1;
+      return a - b;
+    });
+
+    return {
+      candidates: ranked.slice(0, 3),
+      scores,
+    };
+  };
+
+  const hundreds = scorePosition(
+    0,
+    [
+      [d0, 5.2],
+      [d1, 3.1],
+      [mod10(pos.hundredsTop + pos.tensBottom), 3.4],
+      [d2, 2.1],
+    ],
+    pos.hundredsTop
+  );
+
+  const tens = scorePosition(
+    1,
+    [
+      [d1, 5.2],
+      [d0, 3.4],
+      [mod10(pos.tensTop + pos.unitsBottom), 3.2],
+      [d2, 2.4],
+    ],
+    pos.tensTop
+  );
+
+  const units = scorePosition(
+    2,
+    [
+      [d2, 5.2],
+      [d0, 3.5],
+      [mod10(pos.unitsTop + pos.unitsBottom), 3.4],
+      [d1, 2.3],
+    ],
+    pos.unitsTop
+  );
+
+  const scoredCombos: { combo: string; score: number }[] = [];
+  for (const h of hundreds.candidates) {
+    for (const t of tens.candidates) {
+      for (const u of units.candidates) {
+        const containsPrimaryBonus = h === d0 || t === d0 || u === d0 ? 1.5 : 0;
+        const score =
+          hundreds.scores[h] + tens.scores[t] + units.scores[u] + containsPrimaryBonus;
+        scoredCombos.push({ combo: `${h}${t}${u}`, score });
+      }
+    }
+  }
+
+  scoredCombos.sort((a, b) => b.score - a.score || a.combo.localeCompare(b.combo));
+
+  const positional27 = scoredCombos.map((item) => item.combo);
+  const focused8 = positional27.slice(0, 8);
+
+  return {
+    hundredsCandidates: hundreds.candidates,
+    tensCandidates: tens.candidates,
+    unitsCandidates: units.candidates,
+    focused8,
+    positional27,
+  };
+}
+
+export function backtestFormula(
+  formula: FormulaDefinition,
+  history: DrawRecord[]
+): BacktestSummary {
+  if (history.length < 2) {
+    return {
+      formulaId: formula.id,
+      totalTested: 0,
+      hitCount: 0,
+      hitTopCount: 0,
+      hitBottomCount: 0,
+      winRate: 0,
+      currentStreak: 0,
+      straight27Hits: 0,
+      focused8Hits: 0,
+      positionalAccuracy: 0,
+      recentOutcomes: [],
+    };
+  }
+
+  const outcomes: BacktestDrawOutcome[] = [];
+  let hitCount = 0;
+  let hitTopCount = 0;
+  let hitBottomCount = 0;
+  let straight27Hits = 0;
+  let focused8Hits = 0;
+  let totalMatchedPositions = 0;
+
+  for (let i = 0; i < history.length - 1; i++) {
+    const target = history[i];
+    const source = history[i + 1];
+    const priorSlice = history.slice(i + 1);
+
+    const evalResult = formula.evaluate(
+      {
+        top3: source.top3,
+        bottom2: source.bottom2,
+      },
+      {
+        indexChange: source.indexChange,
+        history: priorSlice
